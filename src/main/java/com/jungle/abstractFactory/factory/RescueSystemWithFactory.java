@@ -14,7 +14,7 @@ public class RescueSystemWithFactory {
     private final List<Rescuer>       rescuers = new ArrayList<>();
 
     private RescuerAssignmentStrategy strategy;
-    private String                    disasterType; // "flood" | "fire"
+    private String disasterType;
 
     public RescueSystemWithFactory(RescuerAssignmentStrategy strategy, String disasterType) {
         this.strategy     = strategy;
@@ -55,7 +55,7 @@ public class RescueSystemWithFactory {
                                        double lat, double lng, UrgencyLevel urgency) {
         RescueRequest request = new RescueRequest(victimName, phone, description, lat, lng, urgency);
         requests.add(request);
-        System.out.println("\n  ✅ Yêu cầu cứu hộ #" + request.getId() + " đã được ghi nhận!");
+        System.out.println("\n Yêu cầu cứu hộ #" + request.getId() + " đã được ghi nhận!");
         System.out.println("     Nạn nhân  : " + victimName);
         System.out.println("     Mức độ    : " + urgency.getDisplayName());
         System.out.println("     Thảm họa  : " + disasterType);
@@ -76,18 +76,11 @@ public class RescueSystemWithFactory {
     }
 
     // ─────────────────────── PHÂN CÔNG ───────────────────────
-
-    /**
-     * Phân công 1 yêu cầu cứu hộ:
-     *   1. Strategy chọn người cứu hộ tối ưu.
-     *   2. Abstract Factory tạo bộ công cụ nhất quán theo (disasterType + urgencyLevel).
-     *      Factory method KHÔNG nhận parameter - mọi quyết định nằm trong Concrete Factory.
-     */
     public RescueKit assignRescuer(RescueRequest request) {
         List<Rescuer> available = getAvailableRescuers();
 
         if (available.isEmpty()) {
-            System.out.println("\n  ⚠️  CẢNH BÁO: Không còn người cứu hộ nào sẵn sàng!");
+            System.out.println("\n  CẢNH BÁO: Không còn người cứu hộ nào sẵn sàng!");
             return null;
         }
 
@@ -95,7 +88,7 @@ public class RescueSystemWithFactory {
 
         Optional<Rescuer> chosen = strategy.assign(request, available);
         if (chosen.isEmpty()) {
-            System.out.println("  ✘ Không tìm được người cứu hộ phù hợp cho yêu cầu #" + request.getId());
+            System.out.println("  Không tìm được người cứu hộ phù hợp cho yêu cầu #" + request.getId());
             return null;
         }
 
@@ -115,7 +108,7 @@ public class RescueSystemWithFactory {
         System.out.println("     Yêu cầu  : #" + request.getId() + " (" + request.getVictimName() + ")");
         System.out.printf ("     Người CH : %s [%s]%n", rescuer.getName(), rescuer.getSpecialty());
         System.out.printf ("     Khoảng   : %.2f km%n", distance);
-        System.out.println("\n  📦 Bộ công cụ cứu hộ được chuẩn bị:");
+        System.out.println("\n Bộ công cụ cứu hộ được chuẩn bị:");
         kit.printKit();
 
         return kit;
@@ -136,7 +129,7 @@ public class RescueSystemWithFactory {
 
         for (RescueRequest req : pending) {
             if (getAvailableRescuers().isEmpty()) {
-                System.out.println("  ⚠️  Hết người cứu hộ sẵn sàng! Dừng phân công.");
+                System.out.println(" Hết người cứu hộ sẵn sàng! Dừng phân công.");
                 break;
             }
             RescueKit kit = assignRescuer(req);

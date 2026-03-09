@@ -12,18 +12,8 @@ import java.util.Optional;
  */
 public interface RescuerAssignmentStrategy {
 
-    /**
-     * Chọn người cứu hộ phù hợp nhất cho yêu cầu cứu hộ.
-     *
-     * @param request          yêu cầu cứu hộ cần phân công
-     * @param availableRescuers danh sách người cứu hộ đang sẵn sàng
-     * @return Optional chứa rescuer được chọn, hoặc empty nếu không tìm được
-     */
     Optional<Rescuer> assign(RescueRequest request, List<Rescuer> availableRescuers);
 
-    /**
-     * Tên chiến lược (dùng để hiển thị trên console)
-     */
     String getStrategyName();
 }
 

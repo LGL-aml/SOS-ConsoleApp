@@ -4,6 +4,7 @@ import com.jungle.abstractFactory.factory.*;
 import com.jungle.strategy.model.*;
 import com.jungle.strategy.service.*;
 import com.jungle.util.ConsoleUtil;
+import com.jungle.util.DataInit;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,7 +21,7 @@ public class Main {
                 RescueFactoryProvider.FLOOD
         );
 
-        initSampleRescuers();
+        DataInit.initSampleRescuers(system);
         Menu.printBanner();
 
         boolean running = true;
@@ -240,7 +241,7 @@ public class Main {
         } else {
             all.forEach(System.out::println);
             long available = all.stream().filter(Rescuer::isAvailable).count();
-            System.out.printf("%n  >> Tổng: %d | 🟢 Sẵn sàng: %d | 🔴 Đang bận: %d%n",
+            System.out.printf("%n  >> Tổng: %d | 🟢 Sẵn sàng: %d | Đang bận: %d%n",
                     all.size(), available, all.size() - available);
         }
         ConsoleUtil.printFooter();
@@ -273,18 +274,5 @@ public class Main {
         system.completeRequest(id);
     }
 
-    // ═══════════════════════════════════════════════════════════
-    //  DỮ LIỆU MẪU
-    // ═══════════════════════════════════════════════════════════
-
-    private static void initSampleRescuers() {
-        system.addRescuer(new Rescuer("Nguyễn Văn An",  "0901000001", "Lặn",          16.0544, 108.2022));
-        system.addRescuer(new Rescuer("Trần Thị Bình",  "0901000002", "Y tế",          16.0620, 108.2150));
-        system.addRescuer(new Rescuer("Lê Hoàng Cường", "0901000003", "Cứu hộ chung", 16.0400, 108.1900));
-        system.addRescuer(new Rescuer("Phạm Minh Đức",  "0901000004", "Lặn",          16.4637, 107.5909));
-        system.addRescuer(new Rescuer("Hoàng Thị Em",   "0901000005", "Y tế",          15.8794, 108.3350));
-        system.addRescuer(new Rescuer("Võ Thanh Phong", "0901000006", "Cứu hộ chung", 16.0750, 108.2240));
-        System.out.println(">> Đã tải " + system.getAllRescuers().size() + " người cứu hộ vào hệ thống.");
-    }
 }
 
