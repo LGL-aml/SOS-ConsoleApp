@@ -1,25 +1,23 @@
 package com.jungle.strategy.model;
 
+/**
+ * Enum mức độ khẩn cấp của yêu cầu cứu hộ.
+ * Chỉ giữ 2 mức để demo Abstract Factory Pattern rõ ràng:
+ * - CRITICAL → factory tạo bộ cứu hộ cấp cao
+ * - LOW → factory tạo bộ cứu hộ cơ bản
+ */
 public enum UrgencyLevel {
-    LOW("Thấp", 1),
-    MEDIUM("Trung bình", 2),
-    HIGH("Cao", 3),
-    CRITICAL("Nguy kịch", 4);
+    LOW("Thấp"),
+    CRITICAL("Nguy kịch");
 
     private final String displayName;
-    private final int priority;
 
-    UrgencyLevel(String displayName, int priority) {
+    UrgencyLevel(String displayName) {
         this.displayName = displayName;
-        this.priority = priority;
     }
 
     public String getDisplayName() {
         return displayName;
-    }
-
-    public int getPriority() {
-        return priority;
     }
 
     @Override
@@ -27,4 +25,3 @@ public enum UrgencyLevel {
         return displayName;
     }
 }
-
