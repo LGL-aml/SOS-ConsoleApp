@@ -1,142 +1,252 @@
+# 🆘 SOS Console App – Hệ Thống Cứu Hộ Thảm Họa
 
-## 1. MODULE 1: AUTH & USER MANAGEMENT
-
-*   **Context (Bối cảnh):** Quản lý danh tính và quyền truy cập cho các vai trò người dùng (Citizen, Admin). Là nền tảng bảo mật cho toàn bộ hệ thống.
-*   **Objective (Mục tiêu):** Đảm bảo người dùng có thể đăng ký, đăng nhập an toàn, quản lý profile cá nhân. Admin có thể phân quyền và quản lý trạng thái kích hoạt của người dùng.
-*   **Risks (Rủi ro):**
-    *   Bảo mật JWT (lưu trữ, hết hạn).
-    *   Logic phân quyền (Role-based access control) cần chặt chẽ giữa Backend và Frontend.
-*   **Goals/Metrics (Mục tiêu/Đo lường):**
-    *   Entity: `User`, `Role`, `Permission`.
-    *   Hoàn thành Trang Login / Register và Trang Admin với UserTable, RoleAssignment.
-*   **Intermediate Steps (Các bước thực hiện):**
-    *   Backend: `POST /api/auth/register`, `POST /api/auth/login`, `GET/PUT /api/users/{id}/profile`, `PUT /api/admin/users/{id}/role`.
-    *   Frontend: Trang Login / Register, AuthContext + route guards.
+Ứng dụng console Java mô phỏng hệ thống điều phối cứu hộ thảm họa (lũ lụt / cháy rừng).  
+Dự án áp dụng **2 Design Pattern** chính: **Strategy Pattern** và **Abstract Factory Pattern**.
 
 ---
 
-## 2. MODULE 2: RESCUE REQUEST (Yêu cầu cứu hộ)
+## 🗂️ Cấu Trúc Dự Án
 
-*   **Context (Bối cảnh):** Chức năng cốt lõi cho phép công dân gửi yêu cầu cứu hộ, đồng thời cung cấp giao diện cho Coordinator để xác minh, phân loại khẩn cấp và cập nhật trạng thái yêu cầu.
-*   **Objective (Mục tiêu):** Xây dựng quy trình xử lý yêu cầu cứu hộ từ khi được gửi đến khi được xác nhận/xử lý xong.
-*   **Risks (Rủi ro):**
-    *   Xử lý file upload (ảnh) hiệu quả (MinIO).
-    *   Đảm bảo tính chính xác của tọa độ vị trí (lat/lng).
-    *   Quản lý chuỗi trạng thái phức tạp.
-*   **Goals/Metrics (Mục tiêu/Đo lường):**
-    *   Entity: `RescueRequest` (bao gồm `location lat/lng`, `imageUrls`, `urgencyLevel`).
-    *   Enum Status: `PENDING` → `VERIFIED` → `ASSIGNED` → `IN_PROGRESS` → `COMPLETED / CANCELLED`.
-*   **Intermediate Steps (Các bước thực hiện):**
-    *   Backend: `POST /api/rescue-requests` (multipart), `PUT /api/rescue-requests/{id}/verify`, `PUT /api/rescue-requests/{id}/status`.
-    *   Frontend: Form gửi yêu cầu (map pick location + upload ảnh), Trang "Yêu cầu của tôi", Bảng yêu cầu của Coordinator.
-
----
-
-## 3. MODULE 3: TASK ASSIGNMENT (Điều phối nhiệm vụ)
-
-*   **Context (Bối cảnh):** Liên kết yêu cầu cứu hộ đã xác minh với đội cứu hộ và phương tiện sẵn có.
-*   **Objective (Mục tiêu):** Cho phép Coordinator tạo, điều phối, và theo dõi nhiệm vụ. Hỗ trợ Rescue Team cập nhật trạng thái và báo cáo kết quả.
-*   **Risks (Rủi ro):**
-    *   Đảm bảo chỉ định đúng đội/xe *sẵn sàng* (available).
-    *   Xử lý báo cáo nhiệm vụ (text + ảnh).
-*   **Goals/Metrics (Mục tiêu/Đo lường):**
-    *   Entity: `Task` (liên kết `rescueRequest`, `rescueTeam`, `vehicle`).
-    *   Status Task: `ACCEPTED` → `IN_PROGRESS` → `COMPLETED`.
-    *   Dashboard nhiệm vụ dạng Kanban.
-*   **Intermediate Steps (Các bước thực hiện):**
-    *   Backend: `POST /api/tasks`, `GET /api/tasks/my-team`, `PUT /api/tasks/{id}/status`, `POST /api/tasks/{id}/report`.
-    *   Frontend: Modal "Tạo nhiệm vụ" cho Coordinator, Trang "Nhiệm vụ của tôi" cho Rescue Team.
-
----
-
-## 4. MODULE 4: VEHICLE MANAGEMENT (Phương tiện)
-
-*   **Context (Bối cảnh):** Cung cấp khả năng quản lý danh sách và theo dõi trạng thái của các phương tiện cứu hộ (xe cứu thương, xe chữa cháy, v.v.).
-*   **Objective (Mục tiêu):** Quản lý vòng đời thông tin phương tiện. Lọc được danh sách xe sẵn sàng (AVAILABLE) để phục vụ cho việc gán nhiệm vụ.
-*   **Risks (Rủi ro):**
-    *   Độ chính xác và kịp thời của việc cập nhật trạng thái.
-*   **Goals/Metrics (Mục tiêu/Đo lường):**
-    *   Entity: `Vehicle` (bao gồm `status`: `AVAILABLE / IN_USE / MAINTENANCE`).
-    *   API `GET /api/vehicles/available`.
-*   **Intermediate Steps (Các bước thực hiện):**
-    *   Backend: `GET/POST /api/vehicles`, `PUT /api/vehicles/{id}`, `PUT /api/vehicles/{id}/status`.
-    *   Frontend: VehicleTable + form thêm/sửa, Dropdown chọn vehicle (chỉ show AVAILABLE).
+```
+src/main/java/com/jungle/
+├── Main.java                          ← Điểm vào, vòng lặp menu console
+├── strategy/
+│   ├── model/
+│   │   ├── RescueRequest.java         ← Entity yêu cầu cứu hộ
+│   │   ├── Rescuer.java               ← Entity người cứu hộ
+│   │   ├── RequestStatus.java         ← Enum trạng thái yêu cầu
+│   │   ├── RescuerStatus.java         ← Enum trạng thái người cứu hộ
+│   │   └── UrgencyLevel.java          ← Enum mức độ khẩn cấp
+│   └── service/
+│       ├── RescuerAssignmentStrategy.java  ← Strategy Interface
+│       ├── NearestRescuerStrategy.java     ← Chiến lược: Gần nhất
+│       ├── UrgencyBasedStrategy.java       ← Chiến lược: Theo mức độ khẩn cấp
+│       ├── RoundRobinStrategy.java         ← Chiến lược: Luân phiên
+│       └── RescueSystem.java               ← Context (Strategy Pattern)
+└── abstractFactory/
+    ├── factory/
+    │   ├── RescueFactory.java              ← Abstract Factory Interface
+    │   ├── RescueFactoryProvider.java      ← Factory lookup (disasterType + urgency)
+    │   ├── RescueKit.java                  ← Bộ công cụ cứu hộ (Team + Vehicle + Equipment)
+    │   └── RescueSystemWithFactory.java    ← Context tích hợp cả 2 pattern
+    ├── flood/                              ← Concrete Factories cho lũ lụt
+    │   ├── FloodRescueFactory.java
+    │   ├── FloodCriticalFactory.java
+    │   ├── FloodHighFactory.java
+    │   ├── FloodMediumFactory.java
+    │   └── FloodLowFactory.java
+    ├── fire/                               ← Concrete Factories cho cháy rừng
+    │   ├── FireRescueFactory.java
+    │   ├── FireCriticalFactory.java
+    │   ├── FireHighFactory.java
+    │   ├── FireMediumFactory.java
+    │   └── FireLowFactory.java
+    └── product/                            ← Abstract Products
+        ├── RescueTeam.java
+        ├── RescueVehicle.java
+        └── RescueEquipment.java
+```
 
 ---
 
-## 5. MODULE 5: RELIEF SUPPLY MANAGEMENT (Kho hàng cứu trợ)
+## ✨ Hai Chức Năng Chính
 
-*   **Context (Bối cảnh):** Quản lý hàng tồn kho cứu trợ (thực phẩm, thuốc men, vật tư) và theo dõi lịch sử phân phối.
-*   **Objective (Mục tiêu):** Đảm bảo kiểm soát được số lượng hàng tồn kho và có cảnh báo khi hàng sắp hết. Ghi nhận chi tiết quá trình phân phối.
-*   **Risks (Rủi ro):**
-    *   Đồng bộ tồn kho khi nhập/xuất kho.
-    *   Logic cảnh báo hàng sắp hết.
-*   **Goals/Metrics (Mục tiêu/Đo lường):**
-    *   Entity: `SupplyItem`, `Distribution`.
-    *   API `GET /api/supply-items/low-stock`.
-    *   Cột tồn kho có màu cảnh báo.
-*   **Intermediate Steps (Các bước thực hiện):**
-    *   Backend: `PUT /api/supply-items/{id}/stock`, `POST /api/distributions`.
-    *   Frontend: SupplyTable + form nhập/xuất kho, Form ghi nhận phân phối.
+### 1. 📤 Nạn Nhân Gửi Yêu Cầu Cứu Hộ
 
----
+Người gặp nạn nhập thông tin qua console:
 
-## 6. MODULE 6: REAL-TIME & NOTIFICATIONS
+| Trường          | Mô tả                                      |
+|-----------------|--------------------------------------------|
+| Họ tên          | Tên nạn nhân                               |
+| Số điện thoại   | Liên hệ khẩn cấp                           |
+| Mô tả tình huống| Mô tả ngắn về tình trạng                  |
+| Vĩ độ / Kinh độ | Tọa độ GPS vị trí nạn nhân               |
+| Mức độ khẩn cấp | LOW / MEDIUM / HIGH / CRITICAL             |
 
-*   **Context (Bối cảnh):** Cung cấp thông báo tức thời (real-time) về các thay đổi quan trọng trong hệ thống (trạng thái yêu cầu, nhiệm vụ mới).
-*   **Objective (Mục tiêu):** Triển khai WebSocket để đẩy thông báo và cập nhật dữ liệu tự động mà không cần refresh trang.
-*   **Risks (Rủi ro):**
-    *   Quản lý kết nối và hiệu suất WebSocket.
-    *   Đảm bảo thông báo được gửi đến đúng người nhận.
-*   **Goals/Metrics (Mục tiêu/Đo lường):**
-    *   WebSocket endpoint `/ws/notifications` (sử dụng Spring WebSocket + STOMP).
-    *   Component: NotificationBell (badge số chưa đọc).
-*   **Intermediate Steps (Các bước thực hiện):**
-    *   Backend: Gửi notification khi yêu cầu/task thay đổi, `GET /api/notifications/my`.
-    *   Frontend: WebSocket client, Toast notification, Auto-refresh danh sách.
+**Luồng xử lý:**
+```
+Nạn nhân nhập thông tin
+    → Tạo RescueRequest (id tự tăng, status = PENDING)
+    → Ghi nhận vào hệ thống
+    → Hiển thị xác nhận
+```
+
+**Trạng thái yêu cầu (`RequestStatus`):**
+```
+PENDING → ASSIGNED → IN_PROGRESS → COMPLETED
+                  ↘ CANCELLED
+```
 
 ---
 
-## 7. MODULE 7: MAP & LOCATION
+### 2. 🤝 Hệ Thống Phân Công Người Cứu Hộ
 
-*   **Context (Bối cảnh):** Tích hợp tính năng bản đồ để trực quan hóa vị trí yêu cầu cứu hộ và các nhiệm vụ đang diễn ra.
-*   **Objective (Mục tiêu):** Cung cấp Map View cho Coordinator (để điều phối) và Rescue Team (để nhận chỉ đường).
-*   **Risks (Rủi ro):**
-    *   Tối ưu hóa hiệu suất hiển thị (marker, cluster).
-    *   Tính chính xác của dữ liệu vị trí trên bản đồ.
-*   **Goals/Metrics (Mục tiêu/Đo lường):**
-    *   Sử dụng Leaflet map component.
-    *   API trả về dữ liệu map: `/api/rescue-requests/map-data`.
-*   **Intermediate Steps (Các bước thực hiện):**
-    *   Frontend: Coordinator map view (marker màu theo urgency), Rescue Team (hiển thị vị trí yêu cầu + link Google Maps), Cluster markers.
+Hệ thống tự động chọn người cứu hộ tối ưu dựa trên **chiến lược đang được cấu hình**, sau đó chuẩn bị **bộ công cụ cứu hộ** phù hợp với loại thảm họa và mức độ khẩn cấp.
 
----
-
-## 8. MODULE 8: STATISTICS & REPORTS
-
-*   **Context (Bối cảnh):** Cung cấp các công cụ báo cáo và thống kê để đánh giá hiệu suất hoạt động.
-*   **Objective (Mục tiêu):** Xây dựng các API trả về dữ liệu thống kê đa chiều (theo thời gian, theo khẩn cấp, theo đội) và Dashboard trực quan hóa.
-*   **Risks (Rủi ro):**
-    *   Hiệu suất truy vấn dữ liệu lớn cho các báo cáo phức tạp.
-    *   Đảm bảo tính chính xác khi xuất file (CSV/Excel).
-*   **Goals/Metrics (Mục tiêu/Đo lường):**
-    *   Các API báo cáo: `overview`, `by-urgency`, `by-team`, `timeline`.
-    *   Dashboard với Recharts (biểu đồ cột/pie/line).
-*   **Intermediate Steps (Các bước thực hiện):**
-    *   Backend: `GET /api/reports/...`, `GET /api/admin/reports/export` (Apache POI).
-    *   Frontend: Dashboard với Recharts, Bộ lọc thời gian + nút Export CSV.
+**Luồng xử lý:**
+```
+Lấy danh sách yêu cầu PENDING
+    → Strategy chọn người cứu hộ tối ưu từ danh sách AVAILABLE
+    → Cập nhật: request.status = ASSIGNED, rescuer.status = BUSY
+    → Abstract Factory tạo RescueKit (Team + Vehicle + Equipment)
+    → Hiển thị kết quả phân công + bộ công cụ
+```
 
 ---
 
-## 9. MODULE 9: SYSTEM CONFIG (Admin)
+## 🎨 Design Pattern 1: Strategy Pattern
 
-*   **Context (Bối cảnh):** Cung cấp chức năng quản trị để cấu hình các tham số hệ thống và quản lý dữ liệu danh mục (master data).
-*   **Objective (Mục tiêu):** Cho phép Admin tùy chỉnh các ngưỡng (thresholds) và quản lý các loại danh mục (loại phương tiện, loại hàng cứu trợ).
-*   **Risks (Rủi ro):**
-    *   Bảo mật quyền truy cập Admin.
-    *   Đảm bảo dữ liệu cấu hình được áp dụng đồng bộ.
-*   **Goals/Metrics (Mục tiêu/Đo lường):**
-    *   API cấu hình: `GET/PUT /api/admin/config`.
-    *   API danh mục: `GET/POST/PUT/DELETE /api/admin/categories`.
-*   **Intermediate Steps (Các bước thực hiện):**
-    *   Frontend: Trang Config (form chỉnh tham số), Trang Categories (CRUD table).
+> **Mục đích:** Cho phép thay đổi thuật toán phân công người cứu hộ linh hoạt tại runtime mà không sửa code hệ thống.
+
+### Sơ Đồ
+
+```
+         «interface»
+  RescuerAssignmentStrategy
+  ┌──────────────────────────┐
+  │ + assign(request,        │
+  │     availableRescuers)   │
+  │ + getStrategyName()      │
+  └──────────────────────────┘
+           ▲
+    ┌──────┴──────────────────┐
+    │              │          │
+NearestRescuer  RoundRobin  UrgencyBased
+  Strategy       Strategy    Strategy
+```
+
+### Các Chiến Lược Hiện Có
+
+| Chiến lược | Class | Thuật toán |
+|---|---|---|
+| **Gần nhất** | `NearestRescuerStrategy` | Chọn người cứu hộ có khoảng cách Haversine ngắn nhất đến nạn nhân |
+| **Luân phiên** | `RoundRobinStrategy` | Chọn người có ít nhiệm vụ hoàn thành nhất (cân bằng tải); nếu bằng nhau → gần nhất |
+| **Khẩn cấp** | `UrgencyBasedStrategy` | CRITICAL → kinh nghiệm cao nhất; HIGH → kinh nghiệm × khoảng cách; MEDIUM/LOW → gần nhất |
+
+### Context Class
+
+`RescueSystemWithFactory` đóng vai trò **Context** – giữ reference đến strategy hiện tại và ủy quyền việc chọn người cứu hộ:
+
+```java
+// Thay chiến lược tại runtime (không cần sửa hệ thống)
+system.setStrategy(new RoundRobinStrategy());
+system.setStrategy(new UrgencyBasedStrategy());
+system.setStrategy(new NearestRescuerStrategy());
+```
+
+---
+
+## 🏭 Design Pattern 2: Abstract Factory Pattern
+
+> **Mục đích:** Tạo ra **bộ công cụ cứu hộ** (Team + Vehicle + Equipment) nhất quán theo từng tổ hợp `disasterType × urgencyLevel` mà không để client biết đến class cụ thể.
+
+### Sơ Đồ
+
+```
+      «interface»
+    RescueFactory
+  ┌───────────────────┐
+  │ + createTeam()    │
+  │ + createVehicle() │
+  │ + createEquipment()│
+  └───────────────────┘
+          ▲
+   ┌──────┴──────────────────────────────┐
+   │              │             │        │
+FloodCritical  FloodHigh  FloodMedium  FloodLow
+  Factory       Factory    Factory     Factory
+FireCritical   FireHigh   FireMedium  FireLow
+  Factory       Factory    Factory     Factory
+```
+
+### Ma Trận Factory
+
+| Thảm họa \ Mức độ | CRITICAL | HIGH | MEDIUM | LOW |
+|---|---|---|---|---|
+| **Lũ lụt** (flood) | `FloodCriticalFactory` | `FloodHighFactory` | `FloodMediumFactory` | `FloodLowFactory` |
+| **Cháy rừng** (fire) | `FireCriticalFactory` | `FireHighFactory` | `FireMediumFactory` | `FireLowFactory` |
+
+### Factory Provider
+
+`RescueFactoryProvider` là **điểm vào duy nhất** để lấy Concrete Factory – client chỉ biết `RescueFactory` interface:
+
+```java
+// Bên trong RescueSystemWithFactory.assignRescuer()
+RescueFactory factory = RescueFactoryProvider.getFactory(disasterType, request.getUrgencyLevel());
+RescueKit kit = RescueKit.from(factory); // Team + Vehicle + Equipment nhất quán
+```
+
+### Sản Phẩm (Products)
+
+| Abstract Product | Mô tả |
+|---|---|
+| `RescueTeam` | Đội cứu hộ chuyên biệt theo thảm họa và mức độ |
+| `RescueVehicle` | Phương tiện cứu hộ phù hợp |
+| `RescueEquipment` | Trang thiết bị chuyên dụng |
+
+---
+
+## 🖥️ Menu Console
+
+```
+┌─────────────────────────────────────────┐
+│              MENU CHÍNH                 │
+├─────────────────────────────────────────┤
+│  [CHỨC NĂNG NẠN NHÂN]                   │
+│   1. Gửi yêu cầu cứu hộ                │
+├─────────────────────────────────────────┤
+│  [CHỨC NĂNG HỆ THỐNG - PHÂN CÔNG]       │
+│   2. Phân công tất cả yêu cầu đang chờ │
+│   3. Phân công 1 yêu cầu theo ID        │
+├─────────────────────────────────────────┤
+│  [CẤU HÌNH PATTERN]                     │
+│   4. Đổi chiến lược (Strategy Pattern) │
+│   5. Đổi loại thảm họa (Abs. Factory)  │
+├─────────────────────────────────────────┤
+│  [XEM THÔNG TIN]                        │
+│   6. Xem tất cả yêu cầu cứu hộ         │
+│   7. Xem yêu cầu đang chờ phân công    │
+│   8. Xem danh sách người cứu hộ         │
+│   9. Hoàn thành nhiệm vụ cứu hộ         │
+│   0. Thoát                              │
+└─────────────────────────────────────────┘
+```
+
+---
+
+## 🔗 Tích Hợp Hai Pattern
+
+Hai pattern phối hợp với nhau trong method `assignRescuer()`:
+
+```
+assignRescuer(request)
+    │
+    ├── [Strategy Pattern]
+    │       strategy.assign(request, availableRescuers)
+    │       → Chọn người cứu hộ tối ưu
+    │
+    └── [Abstract Factory Pattern]
+            RescueFactoryProvider.getFactory(disasterType, urgency)
+            → factory.createTeam() + createVehicle() + createEquipment()
+            → Trả về RescueKit nhất quán với loại thảm họa
+```
+
+---
+
+## 🛠️ Công Nghệ
+
+| Mục | Chi tiết |
+|---|---|
+| Ngôn ngữ | Java 17+ |
+| Build tool | Maven |
+| Chạy | Console (CLI) – không cần database, không cần web server |
+| Pattern | Strategy Pattern + Abstract Factory Pattern |
+
+---
+
+## ▶️ Chạy Ứng Dụng
+
+```bash
+mvn compile
+mvn exec:java -Dexec.mainClass="com.jungle.view.Main"
+```
