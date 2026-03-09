@@ -18,13 +18,6 @@ public class RescueFactoryProvider {
 
     private RescueFactoryProvider() {}
 
-    /**
-     * Trả về Concrete Factory phù hợp dựa trên loại thảm họa và mức độ khẩn cấp.
-     *
-     * @param disasterType "flood" hoặc "fire"
-     * @param urgency      mức độ khẩn cấp của yêu cầu cứu hộ
-     * @return  Concrete Factory tương ứng - mỗi factory tạo ra một họ sản phẩm nhất quán
-     */
     public static RescueFactory getFactory(String disasterType, UrgencyLevel urgency) {
         return switch (disasterType.trim().toLowerCase()) {
             case FLOOD -> switch (urgency) {
