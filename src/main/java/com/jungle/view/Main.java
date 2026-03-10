@@ -5,6 +5,7 @@ import com.jungle.strategy.model.*;
 import com.jungle.strategy.service.*;
 import com.jungle.util.ConsoleUtil;
 import com.jungle.util.DataInit;
+import com.jungle.util.LocationUtil;
 
 import java.util.List;
 import java.util.Optional;
@@ -65,8 +66,9 @@ public class Main {
         System.out.print("  Mô tả tình huống   : ");
         String desc = scanner.nextLine().trim();
 
-        double lat = ConsoleUtil.readDouble(scanner, "  Vĩ độ  (VD: 16.0470): ");
-        double lng = ConsoleUtil.readDouble(scanner, "  Kinh độ (VD: 108.206): ");
+        LocationUtil.Area area = LocationUtil.selectArea(scanner);
+        double lat = area.lat;
+        double lng = area.lng;
 
         UrgencyLevel urgency = selectUrgencyLevel();
 
@@ -131,7 +133,7 @@ public class Main {
         if (target.isPresent() && target.get().getStatus() == RequestStatus.PENDING) {
             system.assignRescuer(target.get());
         } else {
-            System.out.println("  ⚠️  Không tìm thấy yêu cầu #" + id + " trong danh sách chờ.");
+            System.out.println("Không tìm thấy yêu cầu #" + id + " trong danh sách chờ.");
         }
     }
 
@@ -158,7 +160,7 @@ public class Main {
             case "1" -> system.setStrategy(new NearestRescuerStrategy());
             case "2" -> system.setStrategy(new UrgencyBasedStrategy());
             case "3" -> system.setStrategy(new RoundRobinStrategy());
-            default  -> System.out.println("  ⚠️  Lựa chọn không hợp lệ.");
+            default  -> System.out.println("Lựa chọn không hợp lệ.");
         }
     }
 
@@ -170,20 +172,20 @@ public class Main {
         System.out.println("\n╔══ ĐỔI LOẠI THẢM HỌA (Abstract Factory Pattern) ═══════════╗");
         System.out.println("  Loại thảm họa hiện tại: " + system.getDisasterType());
         System.out.println();
-        System.out.println("  1. 🌊 Lũ Lụt   → Bộ cứu hộ: xuồng, đồ lặn, đội cứu hộ nước.");
+        System.out.println("  1.Lũ Lụt   → Bộ cứu hộ: xuồng, đồ lặn, đội cứu hộ nước.");
         System.out.println("     (FloodCriticalFactory / FloodHighFactory / ...)");
         System.out.println();
-        System.out.println("  2. 🔥 Hỏa Hoạn → Bộ cứu hộ: xe cứu hỏa, đồ chống cháy, đội chữa cháy.");
+        System.out.println("  2.Hỏa Hoạn → Bộ cứu hộ: xe cứu hỏa, đồ chống cháy, đội chữa cháy.");
         System.out.println("     (FireCriticalFactory / FireHighFactory / ...)");
         System.out.println();
-        System.out.println("  ℹ️  Factory cụ thể được chọn tự động theo mức độ khẩn cấp của từng yêu cầu.");
+        System.out.println(" Factory cụ thể được chọn tự động theo mức độ khẩn cấp của từng yêu cầu.");
         System.out.println("╚════════════════════════════════════════════════════════════════╝");
         System.out.print(">> Chọn loại thảm họa (1-2): ");
 
         switch (scanner.nextLine().trim()) {
             case "1" -> system.setDisasterType(RescueFactoryProvider.FLOOD);
             case "2" -> system.setDisasterType(RescueFactoryProvider.FIRE);
-            default  -> System.out.println("  ⚠️  Lựa chọn không hợp lệ.");
+            default  -> System.out.println(" Lựa chọn không hợp lệ.");
         }
     }
 
@@ -275,4 +277,3 @@ public class Main {
     }
 
 }
-
